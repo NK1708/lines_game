@@ -1,0 +1,165 @@
+<template>
+  <div style="width: 100%; height: 100%;">
+    <canvas id="myCanvas" width="500" height="200"></canvas>
+    <div class="app__field">
+      <div class="app__dot draggable"
+           :data-index="dot.dotIndex"
+           v-for="dot in dots"
+           v-bind:style="{ top: dot.coordY + 'px', left: dot.coordX + 'px' }">
+        {{ dot.dotIndex }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script type="text/javascript">
+    export default {
+        props: ['dots'],
+        data() {
+            return {
+                isEditing: false,
+            };
+        },
+        mounted() {
+            let isDragging = false;
+
+            document.addEventListener('mousedown', function(event) {
+
+                let dragElement = event.target.closest('.draggable');
+
+                if (!dragElement) return;
+
+                event.preventDefault();
+
+                dragElement.ondragstart = function() {
+                    return false;
+                };
+
+                let coords, shiftX, shiftY;
+
+                startDrag(dragElement, event.clientX, event.clientY);
+
+                function onMouseUp(event) {
+                    finishDrag();
+                };
+
+                function onMouseMove(event) {
+                    moveAt(event.clientX, event.clientY);
+                }
+
+                function startDrag(element, clientX, clientY) {
+                    if(isDragging) {
+                        return;
+                    }
+
+                    isDragging = true;
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    element.addEventListener('mouseup', onMouseUp);
+
+                    shiftX = clientX - element.getBoundingClientRect().left;
+                    shiftY = clientY - element.getBoundingClientRect().top;
+
+                    element.style.position = 'fixed';
+
+                    moveAt(clientX, clientY);
+                };
+
+                function finishDrag() {
+                    if(!isDragging) {
+                        return;
+                    }
+
+                    isDragging = false;
+
+                    dragElement.style.top = parseInt(dragElement.style.top) + pageYOffset + 'px';
+                    dragElement.style.position = 'absolute';
+
+                    document.removeEventListener('mousemove', onMouseMove);
+                    dragElement.removeEventListener('mouseup', onMouseUp);
+
+                }
+
+                function moveAt(clientX, clientY) {
+                    let newX = clientX - shiftX;
+                    let newY = clientY - shiftY;
+
+                    let newBottom = newY + dragElement.offsetHeight; // new bottom
+
+                    if (newBottom > document.documentElement.clientHeight) {
+                        let docBottom = document.documentElement.getBoundingClientRect().bottom;
+
+                        let scrollY = Math.min(docBottom - newBottom, 10);
+
+                        if (scrollY < 0) scrollY = 0;
+
+                        window.scrollBy(0, scrollY);
+
+                        newY = Math.min(newY, document.documentElement.clientHeight - dragElement.offsetHeight);
+                    }
+
+                    if (newY < 0) {
+                        let scrollY = Math.min(-newY, 10);
+                        if (scrollY < 0) scrollY = 0; // check precision errors
+
+                        window.scrollBy(0, -scrollY);
+                        newY = Math.max(newY, 0); // newY may not be below 0
+                    }
+
+                    if (newX < 0) newX = 0;
+                    if (newX > document.documentElement.clientWidth - dragElement.offsetWidth) {
+                        newX = document.documentElement.clientWidth - dragElement.offsetWidth;
+                    }
+
+                    dragElement.style.left = newX + 'px';
+                    dragElement.style.top = newY + 'px';
+
+
+
+
+                    var canvas = document.getElementById("myCanvas")
+                    var context = canvas.getContext("2d");
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    var w = canvas.width;
+                    canvas.width = 1;
+                    canvas.width = w;
+
+                    context.moveTo(0, 0);
+                    context.lineTo(newX, newY);
+                    context.stroke();
+                }
+
+            });
+
+
+        }
+    };
+</script>
+
+<style>
+  .app__dot {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    background-color: grey;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1000;
+  }
+
+  #myCanvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .app__field {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+</style>
