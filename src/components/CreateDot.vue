@@ -40,46 +40,45 @@
 </template>
 
 <script>
-export default {
-  props: ['dots'],
-  data() {
-    return {
-      coordX: '',
-      coordY: '',
-      dotIndex: this.dots.length + 1,
-      dotsConnections: [],
-      isCreating: false,
-    };
-  },
-  methods: {
-    openForm() {
-      this.isCreating = true;
-    },
-    closeForm() {
-      this.isCreating = false;
-    },
-    sendForm() {
-      if (this.coordX.length > 0 && this.coordY.length > 0) {
-        const coordX = this.coordX;
-        const coordY = this.coordY;
-        const dotIndex = this.dotIndex;
-        const dotsConnections = this.dotsConnections;
+    export default {
+        props: ['dots'],
+        data() {
+            return {
+                coordX: '',
+                coordY: '',
+                dotIndex: this.dots.length + 1,
+                dotsConnections: [],
+                isCreating: false,
+            };
+        },
+        methods: {
+            openForm() {
+                this.isCreating = true;
+            },
+            closeForm() {
+                this.isCreating = false;
+            },
+            sendForm() {
+                if (this.coordX.length > 0 && this.coordY.length > 0) {
+                    const coordX = this.coordX;
+                    const coordY = this.coordY;
+                    const dotIndex = this.dotIndex;
+                    const dotsConnections = this.dotsConnections;
 
-        this.$emit('create-dot', {
-            coordX,
-            coordY,
-            dotIndex,
-            dotsConnections
-        });
-        this.coordX = '';
-        this.coordY = '';
-        this.dotIndex = this.dotIndex + 1;
-        this.dotsConnections = '';
-        this.isCreating = false;
-      }
-    },
-  },
-};
+                    this.$emit('create-dot', {
+                        coordX,
+                        coordY,
+                        dotIndex,
+                        dotsConnections
+                    });
+                    this.coordX = '';
+                    this.coordY = '';
+                    this.dotIndex = this.dotIndex + 1;
+                    this.isCreating = false;
+                }
+            },
+        },
+    };
 </script>
 
 <style>

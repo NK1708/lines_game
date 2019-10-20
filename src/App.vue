@@ -43,22 +43,26 @@ export default {
   * {
     box-sizing: border-box;
   }
+
   body, html {
     margin: 0;
     padding: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #F6F5F6;
+    overflow-x: hidden;
+  }
+
+  .app {
     width: 100%;
     height: 100%;
-  }
-  .app {
-    width: 100vw;
-    height: 100vh;
-    background-color: #DEDFE4;
   }
 
   .app__start {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    padding: 20px;
   }
 
   .button {
@@ -66,6 +70,7 @@ export default {
     color: #fff;
     border-radius: 30px;
     border: 0;
+    cursor: pointer;
   }
 
   .button--green {

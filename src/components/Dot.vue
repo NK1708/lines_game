@@ -11,34 +11,36 @@
         </button>
       </div>
     </div>
-    <div class="dot__editing" v-show="isEditing">
+
+    <div class="app-create__box" v-show="isEditing">
       <div class="app-create__coords">
         <h2>Координаты:</h2>
-        <div class='field'>
-          <label>X</label>
+        <label class="app-create__label">
+          <span>X</span>
           <input v-model="dot.coordX" type='text'>
-        </div>
-        <div class='field'>
-          <label>Y</label>
+        </label>
+        <label class="app-create__label">
+          <span>Y</span>
           <input v-model="dot.coordY" type='text'>
-        </div>
+        </label>
       </div>
 
-     <!-- <div class="app-create__connections">
+      <div class="app-create__connections">
         <h2>Связь с другими точками:</h2>
         <div class='field'
-             v-for="(dot1, index) in dots">
-          <label>{{ dot.dotIndex }}</label>
+             v-for="(dotItem) in dots"
+              v-if="dotItem.dotIndex !== dot.dotIndex">
+          <label>{{ dotItem.dotIndex }}</label>
           <input type='checkbox'
-                 :value="dot1.dotIndex"
-                 v-model="dot1.dotIndex">
+                 :value="dotItem.dotIndex"
+                 v-model="dot.dotsConnections">
         </div>
-      </div>-->
-
+      </div>
       <button class='button button--red' v-on:click="hideForm">
         Закрыть
       </button>
     </div>
+
   </div>
 </template>
 

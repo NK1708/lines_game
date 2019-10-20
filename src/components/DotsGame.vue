@@ -1,12 +1,12 @@
 <template>
-  <div style="width: 100%; height: 100%;">
-    <canvas id="myCanvas" width="500" height="200"></canvas>
+  <div>
     <div class="app__field">
       <div class="app__dot draggable"
-           @mousedown="dragElement"
-           v-for="dot in dots"
-           v-bind:style="{ top: dot.coordY + 'px', left: dot.coordX + 'px' }">
-        {{ dot.dotIndex }}
+           v-for="(dot, i) in dots"
+           @mousedown="toDragElement"
+           :id="'dot_' + (i + 1)"
+           :style="{ top: dot.coordY + 'px', left: dot.coordX + 'px' }">
+        {{ i + 1 }}
       </div>
     </div>
   </div>
@@ -17,129 +17,139 @@
         props: ['dots'],
         data() {
             return {
-                isEditing: false,
+                isDragging: false,
+                shiftX: '',
+                shiftY: '',
+                newX: '',
+                newY: '',
+                newBottom: '',
+                dragElement: '',
+                currentElement: ''
             };
         },
         methods: {
-          dragElement() {
-            let isDragging = false;
+            toDragElement(event) {
+                this.dragElement = event.target.closest('.draggable');
 
-            document.addEventListener('mousedown', function(event) {
-
-              let dragElement = event.target.closest('.draggable');
-
-              if (!dragElement) return;
-
-              event.preventDefault();
-
-              dragElement.ondragstart = function() {
-                return false;
-              };
-
-              let coords, shiftX, shiftY;
-
-              startDrag(dragElement, event.clientX, event.clientY);
-
-              function onMouseUp(event) {
-                finishDrag();
-              };
-
-              function onMouseMove(event) {
-                moveAt(event.clientX, event.clientY);
-              }
-
-              function startDrag(element, clientX, clientY) {
-                if(isDragging) {
-                  return;
+                if (!this.dragElement) return;
+                event.preventDefault();
+                this.startDrag(this.dragElement, event.clientX, event.clientY);
+            },
+            startDrag(element, clientX, clientY) {
+                if(this.isDragging) {
+                    return;
                 }
-
-                isDragging = true;
-
-                document.addEventListener('mousemove', onMouseMove);
-                element.addEventListener('mouseup', onMouseUp);
-
-                shiftX = clientX - element.getBoundingClientRect().left;
-                shiftY = clientY - element.getBoundingClientRect().top;
-
+                this.isDragging = true;
+                document.addEventListener('mousemove', this.onMouseMove);
+                element.addEventListener('mouseup', this.onMouseUp);
+                this.shiftX = clientX - element.getBoundingClientRect().left;
+                this.shiftY = clientY - element.getBoundingClientRect().top;
                 element.style.position = 'fixed';
-
-                moveAt(clientX, clientY);
-              };
-
-              function finishDrag() {
-                if(!isDragging) {
-                  return;
+                this.moveAt(clientX, clientY, element.id);
+            },
+            onMouseUp() {
+                this.finishDrag();
+            },
+            onMouseMove(event) {
+                this.moveAt(event.clientX, event.clientY);
+            },
+            finishDrag() {
+                if(!this.isDragging) {
+                    return;
                 }
+                this.isDragging = false;
+                this.dragElement.style.top = parseInt(this.dragElement.style.top) + pageYOffset + 'px';
+                this.dragElement.style.position = 'absolute';
+                document.removeEventListener('mousemove', this.onMouseMove);
+                this.dragElement.removeEventListener('mouseup', this.onMouseUp);
+            },
+            moveAt(clientX, clientY, id) {
 
-                isDragging = false;
+                this.newX = clientX - this.shiftX;
+                this.newY = clientY - this.shiftY;
+                this.newBottom = this.newY + this.dragElement.offsetHeight; // new bottom
 
-                dragElement.style.top = parseInt(dragElement.style.top) + pageYOffset + 'px';
-                dragElement.style.position = 'absolute';
-
-                document.removeEventListener('mousemove', onMouseMove);
-                dragElement.removeEventListener('mouseup', onMouseUp);
-
-              }
-
-              function moveAt(clientX, clientY) {
-                let newX = clientX - shiftX;
-                let newY = clientY - shiftY;
-
-                let newBottom = newY + dragElement.offsetHeight; // new bottom
-
-                if (newBottom > document.documentElement.clientHeight) {
-                  let docBottom = document.documentElement.getBoundingClientRect().bottom;
-
-                  let scrollY = Math.min(docBottom - newBottom, 10);
-
-                  if (scrollY < 0) scrollY = 0;
-
-                  window.scrollBy(0, scrollY);
-
-                  newY = Math.min(newY, document.documentElement.clientHeight - dragElement.offsetHeight);
+                if (this.newBottom > document.documentElement.clientHeight) {
+                    let docBottom = document.documentElement.getBoundingClientRect().bottom;
+                    let scrollY = Math.min(docBottom - this.newBottom, 10);
+                    if (scrollY < 0) scrollY = 0;
+                    window.scrollBy(0, scrollY);
+                    this.newY = Math.min(this.newY, document.documentElement.clientHeight - this.dragElement.offsetHeight);
                 }
-
-                if (newY < 0) {
-                  let scrollY = Math.min(-newY, 10);
-                  if (scrollY < 0) scrollY = 0; // check precision errors
-
-                  window.scrollBy(0, -scrollY);
-                  newY = Math.max(newY, 0); // newY may not be below 0
+                if (this.newX > document.documentElement.clientWidth - this.dragElement.offsetWidth) {
+                    this.newX = document.documentElement.clientWidth - this.dragElement.offsetWidth;
                 }
+                this.dragElement.style.left = this.newX + 'px';
+                this.dragElement.style.top = this.newY + 'px';
 
-                if (newX < 0) newX = 0;
-                if (newX > document.documentElement.clientWidth - dragElement.offsetWidth) {
-                  newX = document.documentElement.clientWidth - dragElement.offsetWidth;
-                }
+                this.drawLine(id);
+            },
+            drawLine(id) {
+                let gameField = document.querySelector('.app__field');
+                let lines = document.querySelectorAll('svg');
 
-                dragElement.style.left = newX + 'px';
-                dragElement.style.top = newY + 'px';
+                lines.forEach((line) => {
+                    line.parentNode.removeChild(line);
+                });
 
-              }
+                this.dots.forEach((dot) => {
+                    dot.dotsConnections.forEach((connection) => {
+                        let connectionElement = document.querySelector('#dot_' + connection + ''),
+                            startElement = document.querySelector('#dot_' + dot.dotIndex + ''),
+                            x1 = parseInt(startElement.style.left),
+                            y1 = parseInt(startElement.style.top),
+                            x2 = parseInt(connectionElement.style.left),
+                            y2 = parseInt(connectionElement.style.top);
+                        let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                        let svgNS = svg.namespaceURI;
+                        let line = document.createElementNS(svgNS,'line');
 
-            });
-          }
+                            line.setAttribute('x1', x1 + 15);
+                            line.setAttribute('y1', y1 + 15);
+                            line.setAttribute('x2', x2 + 15);
+                            line.setAttribute('y2', y2 + 15);
+                            line.setAttribute('stroke','#D8D8D8');
+                            line.setAttribute('stroke-width','4px');
+                            svg.appendChild(line);
+                            gameField.appendChild(svg);
+                    });
+                });
+            }
+        },
+        mounted() {
+            this.drawLine();
         }
     };
 </script>
 
 <style>
+  body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
   .app__dot {
-    position: relative;
+    position: absolute!important;
     display: flex;
     justify-content: center;
     align-items: center;
     width: 30px;
     height: 30px;
-    background-color: grey;
+    color: #9B9FA6;
+    font-weight: bold;
+    background-color: #D8D8D8;
     border-radius: 50%;
     cursor: pointer;
+    user-select: none;
     z-index: 1000;
-  }
-
-  #myCanvas {
-    width: 100%;
-    height: 100%;
   }
 
   .app__field {
